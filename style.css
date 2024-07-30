@@ -207,4 +207,5 @@ html{
     flex-direction: column;
     min-height: 860px;
     height: fit-content;
+    flex-shrink: 0;
 }
