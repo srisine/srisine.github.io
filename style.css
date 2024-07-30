@@ -145,7 +145,6 @@ html{
     padding: 20px;
     margin-bottom: 50px;
     min-height: 860px;
-    height: fit-content;
     max-height: fit-content;
     background-color: rgba(0, 0, 0, 0.9);
 }
