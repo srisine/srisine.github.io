@@ -1,11 +1,66 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FU</title>
-</head>
-<body>
-   <img src="sarkar.jpeg" alt="" srcset=""> 
-</body>
-</html>
+from qiskit import QuantumCircuit
+from qiskit_aer import AerSimulator
+import json
+
+def genKey():
+  sim = AerSimulator()
+  qc = QuantumCircuit(3, 3)
+  
+  qc.h(0)
+  qc.h(1)
+
+  qc.cx(1,2)
+  qc.cx(0,1)
+
+  qc.h(0)
+
+  qc.measure(0,0)
+  qc.measure(1,1)
+
+  qc.cx(1,2)
+  qc.cz(0,2)
+
+  qc.measure(2,2)
+
+  result = sim.run(qc, shots=1).result()
+  counts = result.get_counts(qc)
+  return int(list(counts.keys())[0][-1])
+
+
+def encrypt():
+  with open("/content/sample_data/anscombe.json", "rb") as f:
+    data_bytes = f.read()
+
+  data_bits = []
+  for byte in data_bytes:
+    for i in range(8):
+      data_bits.append((byte >> i) & 1)
+
+  qKey = []
+  for i in range(len(data_bits)):
+    qKey.append(genKey())
+
+  encrypted_bits = [p^q for p,q in zip(data_bits, qKey)]
+
+  with open("/content/sample_data/enc.json", "w") as f:
+      json.dump(encrypted_bits, f)
+  with open("/content/sample_data/key.json", "w") as f:
+      json.dump(qKey, f)
+
+def decrypt():
+  with open("/content/sample_data/enc.json", "r") as f:
+    encrypted_bits = json.load(f)
+  with open("/content/sample_data/key.json", "r") as f:
+    qKey = json.load(f)
+
+  decrypted_bits = [p^q for p,q in zip(encrypted_bits, qKey)]
+  decrypted_bytes = bytearray()
+  for i in range(0, len(decrypted_bits), 8):
+    byte = 0
+    for j in range(8):
+      if i + j < len(decrypted_bits):
+        byte |= (decrypted_bits[i + j] << j)
+    decrypted_bytes.append(byte)
+
+  with open("/content/sample_data/dec.json", "wb") as f:
+    f.write(decrypted_bytes)
